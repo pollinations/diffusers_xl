@@ -653,6 +653,7 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
         add_noise=True,
         return_noise=False,
         return_image_latents=False,
+        initial_noise=None,
     ):
         shape = (batch_size, num_channels_latents, height // self.vae_scale_factor, width // self.vae_scale_factor)
         if isinstance(generator, list) and len(generator) != batch_size:
@@ -674,7 +675,10 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
             image_latents = self._encode_vae_image(image=image, generator=generator)
 
         if latents is None and add_noise:
-            noise = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
+            if initial_noise is not None:
+                noise = initial_noise
+            else:
+                noise = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
             # if strength is 1. then initialise the latents to noise, else initial to image + noise
             latents = noise if is_strength_max else self.scheduler.add_noise(image_latents, noise, timestep)
             # if pure noise then scale the initial latents by the  Scheduler's init sigma
@@ -683,7 +687,10 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
             noise = latents.to(device)
             latents = noise * self.scheduler.init_noise_sigma
         else:
-            noise = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
+            if initial_noise is not None:
+                noise = initial_noise
+            else:
+                noise = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
             latents = image_latents.to(device)
 
         outputs = (latents,)
@@ -887,6 +894,7 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
         target_size: Tuple[int, int] = None,
         aesthetic_score: float = 6.0,
         negative_aesthetic_score: float = 2.5,
+        initial_noise: Optional[torch.FloatTensor] = None,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -1123,6 +1131,7 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
             add_noise=add_noise,
             return_noise=True,
             return_image_latents=return_image_latents,
+            initial_noise=initial_noise,
         )
 
         if return_image_latents:
