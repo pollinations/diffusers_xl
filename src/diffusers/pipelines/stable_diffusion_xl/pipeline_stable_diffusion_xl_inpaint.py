@@ -930,6 +930,7 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
         negative_aesthetic_score: float = 2.5,
         initial_noise: Optional[torch.FloatTensor] = None,
         return_prompt_embeds: bool = False,
+        vae_decode_one_by_one: bool = False,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -1353,7 +1354,13 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
             latents = latents.to(next(iter(self.vae.post_quant_conv.parameters())).dtype)
 
         if not output_type == "latent":
-            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
+            if vae_decode_one_by_one:
+                image = []
+                for i in range(latents.shape[0]):
+                    image.append(self.vae.decode(latents[i : i + 1], return_dict=False)[0])
+                image = torch.cat(image, dim=0)
+            else:
+                image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
         else:
             return StableDiffusionXLPipelineOutput(images=latents)
 
