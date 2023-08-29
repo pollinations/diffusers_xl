@@ -1362,7 +1362,7 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
                 image = []
                 for i in range(latents.shape[0]):
                     image.append(self.vae.decode(latents[i : i + 1], return_dict=False)[0])
-                image = torch.cat(image, dim=0)
+                image = torch.stack(image)
             else:
                 print("latents shape", latents.shape)
                 image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
