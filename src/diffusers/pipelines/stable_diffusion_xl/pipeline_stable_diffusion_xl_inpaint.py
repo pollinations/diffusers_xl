@@ -929,6 +929,7 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
         aesthetic_score: float = 6.0,
         negative_aesthetic_score: float = 2.5,
         initial_noise: Optional[torch.FloatTensor] = None,
+        return_prompt_embeds: bool = False,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -1134,6 +1135,10 @@ class StableDiffusionXLInpaintPipeline(DiffusionPipeline, LoraLoaderMixin, FromS
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
             lora_scale=text_encoder_lora_scale,
         )
+
+        if return_prompt_embeds:
+            print("returning prompt embeds", prompt_embeds.shape, negative_prompt_embeds.shape, pooled_prompt_embeds.shape, negative_pooled_prompt_embeds.shape)
+            return prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds
 
         # 4. set timesteps
         def denoising_value_valid(dnv):
